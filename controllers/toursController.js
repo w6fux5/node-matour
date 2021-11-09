@@ -2,6 +2,36 @@ const fs = require('fs');
 
 const tours = JSON.parse(fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`));
 
+// Middleware
+const checkId =
+  ('id',
+  (req, res, next, val) => {
+    console.log(`Tour ID is ${val}`);
+
+    const id = val * 1;
+    const tour = tours.find(el => el.id === id);
+
+    if (id >= tours.length || !tour)
+      return res.json({
+        status: 'fail',
+        message: 'Invalid ID',
+      });
+
+    next();
+  });
+
+const checkBody = (req, res, next) => {
+  if (!req.body.name || !req.body.price) {
+    return res.status(400).json({
+      status: 'fail',
+      message: 'Missing name or price',
+    });
+  }
+
+  next();
+};
+
+// Apis
 const getAllTours = (req, res) => {
   res.json({
     status: 'success',
@@ -12,15 +42,7 @@ const getAllTours = (req, res) => {
 
 const getTour = (req, res) => {
   const id = req.params.id * 1; // 轉換成數字
-
   const tour = tours.find(el => el.id === id);
-
-  if (!tour) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Invalid ID',
-    });
-  }
 
   res.json({
     status: 'success',
@@ -34,7 +56,7 @@ const createTour = (req, res) => {
 
   tours.push(newTour);
 
-  fs.writeFile(`${__dirname}/dev-data/data/tours-simple.json`, JSON.stringify(tours), err => {
+  fs.writeFile(`${__dirname}`, JSON.stringify(tours), err => {
     // 201 創建新資源
     res.status(201).json({
       status: 'success',
@@ -45,13 +67,6 @@ const createTour = (req, res) => {
 };
 
 const updateTour = (req, res) => {
-  if (req.params.id * 1 > tours.length) {
-    res.status(404).json({
-      status: 'fail',
-      message: 'Invalid ID',
-    });
-  }
-
   res.json({
     status: 'success',
     data: {
@@ -61,14 +76,6 @@ const updateTour = (req, res) => {
 };
 
 const deleteTour = (req, res) => {
-  console.log(em);
-  if (req.params.id * 1 > tours.length) {
-    res.status(404).json({
-      status: 'fail',
-      message: 'Invalid ID',
-    });
-  }
-
   res.status(204).json({
     status: 'success',
     data: null,
@@ -76,6 +83,8 @@ const deleteTour = (req, res) => {
 };
 
 module.exports = {
+  checkId,
+  checkBody,
   getAllTours,
   createTour,
   getTour,

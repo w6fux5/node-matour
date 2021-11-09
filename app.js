@@ -8,8 +8,12 @@ const usersRouter = require('./routes/usersRouter');
 const app = express();
 
 //** Middleware */
-app.use(morgan('dev'));
+if (process.env.NODE_DEV === 'development') {
+  app.use(morgan('dev'));
+}
+
 app.use(express.json());
+app.use(express.static(`${__dirname}/public`));
 
 //** Routers */
 app.use('/api/v1/tours', toursRouter);
