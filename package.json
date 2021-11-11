@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "nodemon server.js",
-    "prod": "NODE_DEV=production nodemon server.js"
+    "prod": "NODE_DEV=production nodemon server.js",
+    "import-data": "node dev-data/data/import-dev-data.js --import",
+    "delete-data": "node dev-data/data/import-dev-data.js --delete"
   },
   "keywords": [],
   "author": "",

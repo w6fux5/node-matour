@@ -1,6 +1,6 @@
 const Tour = require('../models/tourModel');
 
-//** */ Apis
+//** getAllTours */
 // @desc    Get all tours
 // @route   Get  /api/v1/tours
 // @access  Public
@@ -17,6 +17,7 @@ const getAllTours = async (req, res) => {
   }
 };
 
+//** getTour */
 // @desc    Get tour by ID
 // @route   Get  /api/v1/tours/:id
 // @access  Public
@@ -37,6 +38,7 @@ const getTour = async (req, res) => {
   }
 };
 
+//** createTour */
 // @desc    Create a new tour
 // @route   POST /api/v1/tours
 // @access  Public
@@ -55,6 +57,7 @@ const createTour = async (req, res) => {
   }
 };
 
+//** updateTour */
 // @desc    Update tour by ID
 // @route   PATCH /api/v1/tours/:id
 // @access  Public
@@ -79,6 +82,7 @@ const updateTour = async (req, res) => {
   }
 };
 
+//** deleteTour */
 // @desc    Delete tour by ID
 // @route   Delete /api/v1/tours/:id
 // @access  Public
