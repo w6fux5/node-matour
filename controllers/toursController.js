@@ -6,7 +6,41 @@ const Tour = require('../models/tourModel');
 // @access  Public
 const getAllTours = async (req, res) => {
   try {
-    const allTours = await Tour.find();
+    //** 建立query */
+    // 1A) Filtering
+    // 如果req.query有包含'page', 'sort', 'limit', 'fields',就把它刪除
+    const queryObj = { ...req.query };
+    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    excludedFields.forEach(el => delete queryObj[el]);
+
+    // 1B) Advanced filter
+    // gte:大於等於, gt:大於, lte:小於等於, lt:小於
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
+
+    // 2) Sorting
+    // 如果不指定排列方式,默認最新創建的tour在最上面
+    console.log(req.query);
+
+    let query = Tour.find(JSON.parse(queryStr));
+
+    if (req.query.sort) {
+      const sortBy = req.query.sort.split(',').join(' ');
+      query = query.sort(sortBy);
+    } else {
+      query = query.sort('-createdAt');
+    }
+
+    //** 執行query */
+    // const query = Tour.find()
+    //   .where('duration')
+    //   .equals(5)
+    //   .where('difficulty')
+    //   .equals('easy');
+
+    const allTours = await query;
+
+    // Send response
     res.status(200).json({
       status: 'success',
       results: allTours.length,
