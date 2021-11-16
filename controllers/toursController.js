@@ -5,22 +5,26 @@ const Tour = require('../models/tourModel');
 // @route   Get  /api/v1/tours
 // @access  Public
 const getAllTours = async (req, res) => {
+  console.log(req.query);
+
   try {
     //** 建立query */
     // 1A) Filtering
-    // 如果req.query有包含'page', 'sort', 'limit', 'fields',就把它刪除
+    // 如果req.query有包含'page', 'sort', 'limit', 'fields' 以上這些屬性就把它刪除
     const queryObj = { ...req.query };
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach(el => delete queryObj[el]);
 
     // 1B) Advanced filter
+    // http://192.168.2.3:5000/api/v1/tours?price[gte]=1200&duration[gte]=5
     // gte:大於等於, gt:大於, lte:小於等於, lt:小於
     let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`); // 將gte, gt, lte, lt替換成$gte, $gt, $lte, $lt
 
     // 2) Sorting
+    // http://192.168.2.3:5000/api/v1/tours?sort=-price,-ratingsAverage
+    // - 代表由大到小
     // 如果不指定排列方式,默認最新創建的tour在最上面
-    console.log(req.query);
 
     let query = Tour.find(JSON.parse(queryStr));
 
@@ -31,22 +35,45 @@ const getAllTours = async (req, res) => {
       query = query.sort('-createdAt');
     }
 
-    //** 執行query */
-    // const query = Tour.find()
-    //   .where('duration')
-    //   .equals(5)
-    //   .where('difficulty')
-    //   .equals('easy');
+    // 3) Field Limiting
+    // http://192.168.2.3:5000/api/v1/tours?fields=name,duration,price
+    // 只返回 name,duration,price 這三個欄位
+    // 前面帶負號表示不要返回這個屬性,例如 -name, -duration, -price
 
-    const allTours = await query;
+    if (req.query.fields) {
+      const fields = req.query.fields.split(',').join(' ');
+      query = query.select(fields);
+    } else {
+      // __v是mongodb內建的屬性,這邊預設返回時不要帶有__v這個屬性,前面的 - 負號 代表不要返回這個屬性
+      query = query.select('-__v');
+    }
+
+    // 4) 分頁
+    // http://192.168.2.3:5000/api/v1/tours?page=2&limit=10
+    // skip()代表要跳過幾筆數據
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 100;
+    const skip = (page - 1) * limit;
+
+    query = query.skip(skip).limit(limit);
+
+    // 當跳過的比數大於數據總比數,則返回錯誤
+    if (req.query.page) {
+      const toursNum = await Tour.countDocuments();
+      if (skip >= toursNum) throw new Error('This page does not exists');
+    }
+
+    //** 執行query */
+    const tours = await query;
 
     // Send response
     res.status(200).json({
       status: 'success',
-      results: allTours.length,
-      data: { tours: allTours },
+      results: tours.length,
+      data: { tours },
     });
   } catch (error) {
+    console.log(error);
     res.status(404).json({ status: 'fail', message: error });
   }
 };
