@@ -1,5 +1,14 @@
 const Tour = require('../models/tourModel');
 
+// MiddleWare
+const aliasTopTours = (req, res, next) => {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+
+  next();
+};
+
 //** getAllTours */
 // @desc    Get all tours
 // @route   Get  /api/v1/tours
@@ -169,4 +178,6 @@ module.exports = {
   getTour,
   updateTour,
   deleteTour,
+
+  aliasTopTours,
 };
