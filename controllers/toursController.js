@@ -124,12 +124,111 @@ const deleteTour = async (req, res) => {
   }
 };
 
+//** get tour stats */
+// @desc    aggregate pipeline, note: 路由需放在/:id路由的前面
+// @route   Delete /api/v1/tours/tour-stats
+// @access  Public
+const getTourStats = async (req, res) => {
+  try {
+    const stats = await Tour.aggregate([
+      {
+        $match: { ratingsAverage: { $gte: 4.5 } },
+      },
+      {
+        $group: {
+          // _id分組類型, null代表不分組
+          // _id: null,
+          // _id: '$difficulty',
+          _id: { $toUpper: '$difficulty' }, // $toUpper => 變成大寫
+          numTours: { $sum: 1 },
+          numRatings: { $sum: '$ratingsQuantity' },
+          avgRating: { $avg: '$ratingsAverage' },
+          avgPrice: { $avg: '$price' },
+          minPrice: { $min: '$price' },
+          maxPrice: { $max: '$price' },
+        },
+      },
+      {
+        $sort: { avgPrice: -1 },
+      },
+      // Pipeline 可以重複
+      // {
+      //   $match: { _id: { $ne: 'EASY' } },
+      // },
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        stats,
+      },
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: 'fail',
+      message: error,
+    });
+  }
+};
+
+const getMonthlyPlan = async (req, res) => {
+  try {
+    const year = req.params.year * 1;
+    const plan = await Tour.aggregate([
+      {
+        $unwind: '$startDates',
+      },
+      {
+        $match: {
+          startDates: { $gte: new Date(`${year}-01-01`), $lte: new Date(`${year}-12-31`) },
+        },
+      },
+      {
+        $group: {
+          _id: { $month: '$startDates' },
+          numTourStarts: { $sum: 1 },
+          tours: { $push: '$name' },
+        },
+      },
+      // 新增month欄位
+      {
+        $addFields: {
+          month: '$_id',
+        },
+      },
+      {
+        // 不顯示_id
+        $project: {
+          _id: 0,
+        },
+      },
+      {
+        $sort: { numTourStarts: -1 },
+      },
+    ]);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        plan,
+      },
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: 'fail',
+      message: error,
+    });
+  }
+};
+
 module.exports = {
   getAllTours,
   createTour,
   getTour,
   updateTour,
   deleteTour,
+  getTourStats,
+  getMonthlyPlan,
 
   aliasTopTours,
 };
