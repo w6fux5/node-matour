@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { default: slugify } = require('slugify');
+const validator = require('validator');
 
 const tourSchema = new mongoose.Schema(
   {
@@ -10,6 +11,12 @@ const tourSchema = new mongoose.Schema(
       trim: true,
       maxLength: [40, 'A tour name must have less or equal then 50 characters'],
       minLength: [3, 'A tour name must have more or equal then 3 characters'],
+      validate: {
+        validator: function (val) {
+          return validator.isAlpha(val.split(' ').join(''));
+        },
+        message: 'Tour name must only contain characters.',
+      },
     },
 
     slug: String,
@@ -50,7 +57,18 @@ const tourSchema = new mongoose.Schema(
       required: [true, 'A tour must have a price'],
     },
 
-    priceDiscount: Number,
+    priceDiscount: {
+      type: Number,
+      validate: {
+        message: 'Discount price ({VALUE}) should be below regular price.', // {VALUE} 可以直接訪問到request裡面給的priceDiscount的value
+
+        // 只有當新的document創建時, this才會指向當前的document
+        // this only point to current doc on new doc creation.
+        validator: function (val) {
+          return this.price > val; // 原始價格大於折後返回true, 原始價格小於折扣返回false
+        },
+      },
+    },
 
     summary: {
       type: String,
