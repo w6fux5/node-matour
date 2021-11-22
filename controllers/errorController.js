@@ -9,6 +9,12 @@ const handleCastErrorDB = err => {
 const handleDuplicateFieldsDb = err => {
   const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
   const message = `Duplicate field value: ${value}. Please use another value`;
+  return new AppError(message, 400);
+};
+
+const handleValidErrorDb = err => {
+  const errors = Object.values(err.errors).map(el => el.message);
+  const message = `Invalid input data ${errors.join('. ')}`;
 
   return new AppError(message, 400);
 };
@@ -33,7 +39,7 @@ const sendErrProd = (err, res) => {
     // 程式錯誤,第三方package錯誤或其他未知的錯誤操成的異常,只返回通用的訊息給client
   } else {
     // 1) Log Error
-    // console.error('Error 🔥', err);
+    console.error('Error 🔥', err);
 
     // 2) Send generic message to client
     res.status(500).json({
@@ -56,6 +62,7 @@ module.exports = (err, req, res, next) => {
 
     if (error.name === 'CastError') error = handleCastErrorDB(error);
     if (error.code === 11000) error = handleDuplicateFieldsDb(error);
+    if (error.name === 'ValidationError') error = handleValidErrorDb(error);
 
     sendErrProd(error, res);
   }
