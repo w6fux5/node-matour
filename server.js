@@ -1,5 +1,5 @@
 process.on('uncaughtException', err => {
-  console.log('un caught exception 🔥 shut down...');
+  console.log('uncaught exception 🔥 shut down...');
   console.log(err.name, err.message);
   process.exit(1);
 });
