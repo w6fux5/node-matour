@@ -42,7 +42,6 @@ const getAllTours = catchAsync(async (req, res, next) => {
 // @access  Public
 const getTour = catchAsync(async (req, res, next) => {
   const tour = await Tour.findById(req.params.id);
-
   if (!tour) {
     return next(new AppError('No tour found with that ID', 404));
     // throw new AppError('Tour not found', 404);
@@ -157,7 +156,10 @@ const getMonthlyPlan = catchAsync(async (req, res, next) => {
     },
     {
       $match: {
-        startDates: { $gte: new Date(`${year}-01-01`), $lte: new Date(`${year}-12-31`) },
+        startDates: {
+          $gte: new Date(`${year}-01-01`),
+          $lte: new Date(`${year}-12-31`),
+        },
       },
     },
     {

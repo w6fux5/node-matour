@@ -8,13 +8,19 @@ dotenv.config({ path: './config.env' });
 const db = process.env.DATABASE.replace('<password>', process.env.DATABASE_PWD);
 
 mongoose
-  .connect(db, { useCreateIndex: true, useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(db, {
+    useCreateIndex: true,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(con => {
     console.log('DB connection successful');
     // console.log(con.connection);
   });
 
-const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours-simple.json`, 'utf-8'));
+const tours = JSON.parse(
+  fs.readFileSync(`${__dirname}/tours-simple.json`, 'utf-8')
+);
 console.log(tours);
 
 const importData = async () => {
